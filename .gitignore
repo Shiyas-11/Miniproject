@@ -21,4 +21,4 @@ rad.json
 #Test results file
 TestResults.xml
 #vscode settings 
-.vscode/
+.vscode/settings.json
