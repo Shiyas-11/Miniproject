@@ -4,13 +4,14 @@ import {
   getClassroomDetails,
   getClassroomOverview,
   getClassroomStudents,
-} from "../controllers/classroomcon.js";
+  addStudentToClassroom,
+} from "../controllers/classroomController.js";
 
-import teacherVerifyToken from "../middleware/teacherVerifyToken.js";
+import { verifyTeacherToken } from "../middleware/verifyTeacheToken.js";
 
 const router = express.Router();
 
-router.use(teacherVerifyToken);
+router.use(verifyTeacherToken);
 
 // Create a classroom
 router.post("/create", createClassroom);
@@ -23,5 +24,8 @@ router.get("/:id/overview", getClassroomOverview);
 
 // Get paginated student list
 router.get("/:id/students", getClassroomStudents);
+
+//add new student to classroom
+router.post("/:classroomId/add-student", addStudentToClassroom);
 
 export default router;

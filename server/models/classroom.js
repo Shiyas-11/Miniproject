@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const classroomSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -8,7 +10,7 @@ const classroomSchema = new mongoose.Schema(
     },
     year: { type: Number, required: true }, // passout year
     department: { type: String, required: true },
-
+    institution: { type: String, required: true },
     description: { type: String, default: "" },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -41,3 +43,5 @@ const classroomSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+const Classroom = mongoose.model("Classroom", classroomSchema);
+export default Classroom;
