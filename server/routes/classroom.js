@@ -10,6 +10,11 @@ import {
 } from "../controllers/classroomController.js";
 import { getTeacherClassrooms } from "../controllers/teacherController.js";
 import { verifyTeacherToken } from "../middleware/verifyTeacheToken.js";
+import {
+  getAllTestSubmissions,
+  getSingleStudentSubmission,
+  getTestOverview,
+} from "../controllers/testController.js";
 
 const router = express.Router();
 
@@ -37,5 +42,10 @@ router.get("/:classroomId/tests", getClassroomTests);
 router.get("/:classroomId/materials", getClassroomMaterials);
 //teacher retirve class list
 router.get("/", getTeacherClassrooms);
+//get test submission
+router.get("/submissions/:testId", getAllTestSubmissions);
+router.get("/submissions/:testId/:studentId", getSingleStudentSubmission);
 
+//get test overview
+router.get("/overview/:testId", getTestOverview);
 export default router;

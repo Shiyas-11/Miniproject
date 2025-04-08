@@ -160,7 +160,7 @@ export const submitTest = async (req, res) => {
         });
 
         codingSubmissionId = codingSub._id;
-        marksObtained = 0; // assume 0, to be updated after judge
+        ans.marksObtained = 0; // assume 0, to be updated after judge
       }
 
       totalScore += marksObtained;
@@ -170,7 +170,7 @@ export const submitTest = async (req, res) => {
         type,
         selectedOptions,
         codingSubmission: codingSubmissionId,
-        marksObtained,
+        marksObtained: ans.marksObtained,
       });
     }
 
@@ -190,5 +190,191 @@ export const submitTest = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Something went wrong." });
+  }
+};
+
+export const getStudentSubmission = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { testId } = req.params;
+    const submission = await TestSubmission.findOne({
+      student: studentId,
+      test: testId,
+    }).populate("answers.codingSubmission");
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found." });
+    }
+
+    const test = await Test.findById(testId);
+
+    const formattedAnswers = await Promise.all(
+      submission.answers.map(async (ans) => {
+        if (ans.type === "MCQ" || ans.type === "MSQ") {
+          const question = await MCQ.findById(ans.question);
+          return {
+            type: ans.type,
+            questionText: question.question,
+            selectedOptions: ans.selectedOptions,
+            isCorrect: ans.marksObtained > 0,
+            marksObtained: ans.marksObtained,
+          };
+        } else if (ans.type === "Coding") {
+          const question = await CodingQuestion.findById(ans.question);
+          const codingData = ans.codingSubmission;
+          return {
+            type: "Coding",
+            questionText: question.title || "Coding Question",
+            code: codingData.code,
+            language: codingData.language,
+            passedTestCases: codingData.passedTestCases,
+            totalTestCases: codingData.totalTestCases,
+            status: codingData.status,
+            marksObtained: ans.marksObtained,
+          };
+        }
+      })
+    );
+
+    res.json({
+      testTitle: test.title,
+      submittedAt: submission.submittedAt,
+      totalScore: submission.totalScore,
+      timeTaken: submission.timeTaken,
+      answers: formattedAnswers,
+    });
+  } catch (err) {
+    console.error("Error fetching submission:", err);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+export const getAllTestSubmissions = async (req, res) => {
+  try {
+    const { testId } = req.params;
+
+    const submissions = await TestSubmission.find({ test: testId }).populate(
+      "student",
+      "name email"
+    );
+
+    const formatted = submissions.map((sub) => ({
+      studentId: sub.student._id,
+      name: sub.student.name,
+      email: sub.student.email,
+      totalScore: sub.totalScore,
+      timeTaken: sub.timeTaken,
+      submittedAt: sub.submittedAt,
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("Error fetching submissions:", err);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+export const getSingleStudentSubmission = async (req, res) => {
+  try {
+    const { testId, studentId } = req.params;
+
+    const submission = await TestSubmission.findOne({
+      test: testId,
+      student: studentId,
+    }).populate("answers.codingSubmission");
+
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found." });
+    }
+
+    const test = await Test.findById(testId);
+
+    const formattedAnswers = await Promise.all(
+      submission.answers.map(async (ans) => {
+        if (ans.type === "MCQ" || ans.type === "MSQ") {
+          const question = await MCQ.findById(ans.question);
+          return {
+            type: ans.type,
+            questionText: question.question,
+            selectedOptions: ans.selectedOptions,
+            isCorrect: ans.marksObtained > 0,
+            marksObtained: ans.marksObtained,
+          };
+        } else if (ans.type === "Coding") {
+          const question = await CodingQuestion.findById(ans.question);
+          const codingData = ans.codingSubmission;
+          return {
+            type: "Coding",
+            questionText: question.title || "Coding Question",
+            code: codingData.code,
+            language: codingData.language,
+            passedTestCases: codingData.passedTestCases,
+            totalTestCases: codingData.totalTestCases,
+            status: codingData.status,
+            marksObtained: ans.marksObtained,
+          };
+        }
+      })
+    );
+
+    res.json({
+      testTitle: test.title,
+      submittedAt: submission.submittedAt,
+      totalScore: submission.totalScore,
+      timeTaken: submission.timeTaken,
+      answers: formattedAnswers,
+    });
+  } catch (err) {
+    console.error("Error fetching student submission:", err);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+export const getTestOverview = async (req, res) => {
+  const { testId } = req.params;
+
+  try {
+    const test = await Test.findById(testId);
+    if (!test) return res.status(404).json({ message: "Test not found" });
+
+    const submissions = await TestSubmission.find({ test: testId }).populate(
+      "student"
+    );
+
+    if (submissions.length === 0) {
+      return res.status(200).json({
+        testId,
+        title: test.title,
+        totalSubmissions: 0,
+        averageScore: 0,
+        highestScore: 0,
+        lowestScore: 0,
+        topPerformers: [],
+      });
+    }
+
+    const scores = submissions.map((s) => s.totalScore);
+    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const maxScore = Math.max(...scores);
+    const minScore = Math.min(...scores);
+
+    const topPerformers = submissions
+      .filter((s) => s.totalScore === maxScore)
+      .map((s) => ({
+        name: s.student.name,
+        score: s.totalScore,
+        studentId: s.student._id,
+      }));
+
+    res.status(200).json({
+      testId,
+      title: test.title,
+      totalSubmissions: submissions.length,
+      averageScore: parseFloat(avgScore.toFixed(2)),
+      highestScore: maxScore,
+      lowestScore: minScore,
+      topPerformers,
+    });
+  } catch (err) {
+    console.error("Error getting test overview:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
