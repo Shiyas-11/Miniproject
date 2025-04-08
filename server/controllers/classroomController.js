@@ -205,3 +205,22 @@ export const addStudentToClassroom = async (req, res) => {
       .json({ message: "Error adding student to classroom.", details: err });
   }
 };
+
+export const getClassroomTests = async (req, res) => {
+  try {
+    const classroomId = req.params.classroomId;
+    const tests = await Test.find({ classroom: classroomId });
+    res.status(200).json({ success: true, tests });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+export const getClassroomMaterials = async (req, res) => {
+  try {
+    const classroomId = req.params.classroomId;
+    const materials = await StudyMaterial.find({ classroom: classroomId });
+    res.status(200).json({ success: true, materials });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

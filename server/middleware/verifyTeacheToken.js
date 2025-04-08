@@ -10,7 +10,8 @@ export const verifyTeacherToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.teacher = decoded; // attach decoded teacher info
+    req.teacher = decoded;
+    req.user = decoded; // attach decoded teacher info
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token." });

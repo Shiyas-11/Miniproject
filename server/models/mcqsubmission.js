@@ -28,7 +28,7 @@ const mcqSubmissionSchema = new mongoose.Schema(
     answers: [
       {
         questionId: mongoose.Schema.Types.ObjectId,
-        selectedOptions: [String],
+        selectedOption: String,
         isCorrect: Boolean,
       },
     ],

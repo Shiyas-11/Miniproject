@@ -12,7 +12,8 @@ import liveQuizRoutes from "./routes/livequiz.js";
 import { quizSocketHandler } from "./sockets/quizSockets.js";
 import questionUploadRoutes from "./routes/question.js";
 import testRoutes from "./routes/test.js";
-
+import studyMaterialroutes from "./routes/studyMaterial.js";
+import studentRoutes from "./routes/student.js";
 dotenv.config();
 const app = express();
 
@@ -27,6 +28,8 @@ app.use("/api/classroom", classroomRoutes);
 app.use("/api/livequiz", liveQuizRoutes);
 app.use("/api/questions", questionUploadRoutes);
 app.use("/api/test/", testRoutes);
+app.use("/api/classroom/resources", studyMaterialroutes);
+app.use("/api/student", studentRoutes);
 
 // DB Connection
 await mongoose

@@ -5,8 +5,10 @@ import {
   getClassroomOverview,
   getClassroomStudents,
   addStudentToClassroom,
+  getClassroomTests,
+  getClassroomMaterials,
 } from "../controllers/classroomController.js";
-
+import { getTeacherClassrooms } from "../controllers/teacherController.js";
 import { verifyTeacherToken } from "../middleware/verifyTeacheToken.js";
 
 const router = express.Router();
@@ -27,5 +29,13 @@ router.get("/:id/students", getClassroomStudents);
 
 //add new student to classroom
 router.post("/:classroomId/add-student", addStudentToClassroom);
+
+//see assigned tests
+router.get("/:classroomId/tests", getClassroomTests);
+
+//see given materials
+router.get("/:classroomId/materials", getClassroomMaterials);
+//teacher retirve class list
+router.get("/", getTeacherClassrooms);
 
 export default router;

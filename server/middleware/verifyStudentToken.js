@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-
-export const verifyStudentToken = (req, res, next) => {
+import Student from "../models/student.js";
+export const verifyStudentToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(" ")[1];
 
@@ -10,9 +10,14 @@ export const verifyStudentToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // attach decoded student info
+    const student = await Student.findById(decoded.id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+    req.user = student; // attach decoded student info
+    // console.log(req.user);
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token." });
+    return res.status(401).json({ message: "Invalid token.", details: err });
   }
 };
