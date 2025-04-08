@@ -2,10 +2,16 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
 //routes
 import teacherAuthRoutes from "./routes/teacherAuth.js";
 import studentAuthRoutes from "./routes/studentAuth.js";
 import classroomRoutes from "./routes/classroom.js";
+import liveQuizRoutes from "./routes/livequiz.js";
+import { quizSocketHandler } from "./sockets/quizSockets.js";
+import questionUploadRoutes from "./routes/question.js";
+import testRoutes from "./routes/test.js";
 
 dotenv.config();
 const app = express();
@@ -18,6 +24,9 @@ app.use(express.json());
 app.use("/api/teacher", teacherAuthRoutes);
 app.use("/api/student", studentAuthRoutes);
 app.use("/api/classroom", classroomRoutes);
+app.use("/api/livequiz", liveQuizRoutes);
+app.use("/api/questions", questionUploadRoutes);
+app.use("/api/test/", testRoutes);
 
 // DB Connection
 await mongoose
@@ -27,6 +36,17 @@ await mongoose
   })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // update to frontend URL later
+    methods: ["GET", "POST"],
+  },
+});
+
+// Plug in socket logic
+quizSocketHandler(io);
 
 // Server start
 const PORT = process.env.PORT || 5000;

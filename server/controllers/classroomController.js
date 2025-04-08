@@ -152,7 +152,7 @@ export const addStudentToClassroom = async (req, res) => {
     if (!studentName || !email || !rollno || !password) {
       return res.status(400).json({ message: "Missing required fields." });
     }
-
+    const rno = rollno.trim();
     const classroom = await Classroom.findById(classroomId);
     if (!classroom)
       return res.status(404).json({ message: "Classroom not found." });
@@ -172,12 +172,12 @@ export const addStudentToClassroom = async (req, res) => {
         .json({ message: "Student with this email already exists." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const studentId = `${classroom.institution}_${classroom.department}_${classroom.year}_${rollno}`;
+    const studentId = `${classroom.institution}_${classroom.department}_${classroom.year}_${rno}`;
 
     const newStudent = new Student({
       name: studentName.trim(),
       email: email.toString().trim().toLowerCase(),
-      rollno: rollno.trim(),
+      rollno: rno,
       institutionName: classroom.institution,
       classroom: classroom._id,
       studentId,

@@ -5,12 +5,24 @@ const questionEntrySchema = new mongoose.Schema(
     question: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "questions.type",
+      refPath: "type", // dynamically refers to MCQ / MSQ / Coding
     },
-    type: { type: String, required: true, enum: ["MCQ", "MSQ", "Coding"] },
-    marks: { type: Number, required: true },
-    negativeMarks: { type: Number, default: 0 },
-    customTimeLimit: { type: Number }, // in minutes (optional)
+    type: {
+      type: String,
+      required: true,
+      enum: ["MCQ", "MSQ", "Coding"],
+    },
+    marks: {
+      type: Number,
+      required: true,
+    },
+    negativeMarks: {
+      type: Number,
+      default: 0,
+    },
+    customTimeLimit: {
+      type: Number, // in minutes
+    },
   },
   { _id: false }
 );

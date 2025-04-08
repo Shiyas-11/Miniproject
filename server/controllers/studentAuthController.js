@@ -36,6 +36,7 @@ export const registerStudent = async (req, res) => {
 
 export const loginStudent = async (req, res) => {
   try {
+    let firstLogin = false;
     const { email, password } = req.body;
     const student = await Student.findOne({ email });
     if (!student) return res.status(400).json({ msg: "Invalid credentials" });
@@ -44,15 +45,45 @@ export const loginStudent = async (req, res) => {
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
     if (student.xp === -1) {
-      student.xp = 0;
-      await student.save();
+      firstLogin = true;
     }
 
     const token = jwt.sign({ id: student._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
-    res.status(200).json({ token, student });
+    res.status(200).json({ token, student, firstLogin });
   } catch (err) {
     res.status(500).json({ msg: "Error logging in", error: err.message });
+  }
+};
+
+export const setNewPassword = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student)
+      return res.status(404).json({ message: "Student not found." });
+
+    if (student.xp !== -1) {
+      return res.status(400).json({ message: "Password already set..." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    student.password = hashedPassword;
+    student.xp = 0;
+
+    await student.save();
+    res.status(200).json({ message: "Password set successfully." });
+  } catch (error) {
+    console.error("Set password error:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };
