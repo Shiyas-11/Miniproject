@@ -10,7 +10,7 @@ const questionEntrySchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["MCQ", "MSQ", "Coding"],
+      enum: ["MCQ", "MSQ", "Coding" ],
     },
     marks: {
       type: Number,
@@ -38,8 +38,8 @@ const testSchema = new mongoose.Schema(
     },
     duration: { type: Number, required: true }, // in minutes
     totalMarks: { type: Number }, // optional, can be calculated
-    startTime: { type: Date },
-    endTime: { type: Date },
+    startTime: { type: Date ,default:Date("2025-04-9T18:33:27.974+00:00") },
+    endTime: { type: Date ,default:"2025-04-10T18:33:27.974+00:00"},
     classroom: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Classroom",

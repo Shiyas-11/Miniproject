@@ -17,6 +17,8 @@ const StudentSignIn = () => {
       return;
     }
     axios.patch();
+
+    router.push("/studentdashboard");
   };
 
   return (

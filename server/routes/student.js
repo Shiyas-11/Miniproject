@@ -4,6 +4,7 @@ import {
   getClassroomTestsSubmitted,
   getStudentClassroom,
   getStudentProfile,
+  getTestByID,
   updateStudentProfile,
 } from "../controllers/studentController.js";
 import { verifyStudentToken } from "../middleware/verifyStudentToken.js";
@@ -20,6 +21,7 @@ router.get("/profile", getStudentProfile);
 router.get("/classroom", getStudentClassroom);
 router.get("/classroom/tests/submissions", getClassroomTestsSubmitted);
 router.get("/classroom/tests/", getAllClassroomTestsWithStatus);
+router.get("/classroom/tests/:testId", getTestByID);
 router.post("/classroom/tests/submit-test", submitTest);
 router.get("/submissions/:testId", getStudentSubmission);
 

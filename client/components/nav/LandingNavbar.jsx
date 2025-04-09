@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LandingNavbar() {
   const [isOpen, setIsOpen] = useState();
+  const router = useRouter();
   return (
     <>
       <nav
@@ -30,20 +32,18 @@ export default function LandingNavbar() {
             <a href="#" className="hover:text-white/90">
               Contact
             </a>
+
+            <ThemeToggle />
             <Button
               variant="secondary"
               className="bg-white text-black hover:bg-gray-100 text-sm font-semibold"
-              onClick={() => setIsOpen(true)}
+              onClick={() => {
+                setIsOpen(true);
+                router.push("/login");
+              }}
             >
               Sign In
             </Button>
-
-            <ThemeToggle />
-            <div className="">
-              <Button variant="ghost" size="icon">
-                <Menu className="text-white dark:text-black " />
-              </Button>
-            </div>
           </div>
         </div>
       </nav>

@@ -3,6 +3,9 @@ import Classroom from "../models/classroom.js";
 import Teacher from "../models/teacher.js";
 import Test from "../models/test.js";
 import TestSubmission from "../models/testsubmission.js";
+import MCQ from "../models/mcqquestion.js";
+import MSQ from "../models/msqquestion.js";
+import CodingQuestion from "../models/codingquestion.js";
 
 export const updateStudentProfile = async (req, res) => {
   try {
@@ -59,7 +62,6 @@ export const getClassroomTestsSubmitted = async (req, res) => {
   try {
     const student = req.user; // assume user is added by auth middleware
     const classroomId = student.classroom;
-    console.log(student, "\n\n", classroomId);
 
     const tests = await Test.find({ classroom: classroomId });
 
@@ -88,10 +90,8 @@ export const getAllClassroomTestsWithStatus = async (req, res) => {
   try {
     const classroomId = req.user.classroom;
     const studentId = req.user._id;
-    console.log(req.user);
     // 1. Get all tests for this classroom
     const tests = await Test.find({ classroom: classroomId });
-
     // 2. For each test, check if a submission exists by the student
     const results = await Promise.all(
       tests.map(async (test) => {
@@ -99,7 +99,6 @@ export const getAllClassroomTestsWithStatus = async (req, res) => {
           test: test._id,
           student: studentId,
         });
-
         return {
           test,
           submitted: !!submission,
@@ -132,9 +131,11 @@ export const getStudentProfile = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
+        id: student._id,
+        studentId: student.studentId,
         name: student.name,
         email: student.email,
-        rollNumber: student.rollNumber,
+        rollNumber: student.rollno,
         xp: student.xp,
         level: student.level,
         profilePicture: student.profilePicture,
@@ -144,6 +145,48 @@ export const getStudentProfile = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+export const getTestByID = async (req, res) => {
+  try {
+    const { testId } = req.params;
+
+    const test = await Test.findById(testId).lean();
+
+    if (!test) {
+      return res.status(404).json({ success: false, message: "Test not found" });
+    }
+
+    // For each question entry, fetch actual question content
+    const populatedQuestions = await Promise.all(
+      test.questions.map(async (q) => {
+        let questionData;
+       
+        switch (q.type) {
+          case "MCQ":
+            questionData = await MCQ.findById(q.question).lean();
+            break;
+          case "MSQ":
+            questionData = await MSQ.findById(q.question).lean();
+            break;
+          case "Coding":
+            questionData = await CodingQuestion.findById(q.question).lean();
+            break;
+        }
+
+        return {
+          ...q,
+          questionData,
+        };
+      })
+    );
+
+    test.questions = populatedQuestions;
+
+    return res.status(200).json({ success: true, test });
+  } catch (error) {
+    console.error("Error fetching test:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

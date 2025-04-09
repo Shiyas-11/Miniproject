@@ -41,7 +41,7 @@ router.get("/:classroomId/tests", getClassroomTests);
 //see given materials
 router.get("/:classroomId/materials", getClassroomMaterials);
 //teacher retirve class list
-router.get("/", getTeacherClassrooms);
+router.get("/details", getTeacherClassrooms);
 //get test submission
 router.get("/submissions/:testId", getAllTestSubmissions);
 router.get("/submissions/:testId/:studentId", getSingleStudentSubmission);

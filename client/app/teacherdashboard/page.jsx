@@ -1,83 +1,142 @@
 "use client";
 
-import { Card, CardContent, CardTitle } from "../components/card";
-import Navbar from "../components/Navbar";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu } from "lucide-react";
-import { useState, useEffect } from "react";
+import axios from "axios";
+import TeacherNavbar from "@/components/nav/TeacherNavbar";
 
-export default function TeacherDashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [classrooms, setClassrooms] = useState([]);
+const TeacherDashboard = () => {
   const router = useRouter();
+  const [classrooms, setClassrooms] = useState([]);
+  const [selectedClassroom, setSelectedClassroom] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [token, setToken] = useState("");
 
   useEffect(() => {
-    // Fetch classrooms from backend when connected
-    // Example: fetch('/api/classrooms').then(res => res.json()).then(data => setClassrooms(data));
-
-    // Dummy Data (Remove once API is connected)
-    setClassrooms([
-      { id: 1, title: "S6 IT", students: 25 },
-      { id: 2, title: "S4 IT", students: 30 },
-      { id: 3, title: "S2 IT", students: 20 },
-    ]);
+    const localToken = localStorage.getItem("token");
+    if (!localToken) {
+      router.push("/login");
+    } else {
+      setToken(localToken);
+      fetchClassrooms(localToken);
+    }
   }, []);
 
-  const handleClassroomClick = (id) => {
-    router.push(`/teacherdashboard/studp`);
+  const fetchClassrooms = async (token) => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/classroom/details",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setClassrooms(res.data.classrooms);
+    } catch (err) {
+      console.error("Error fetching classrooms:", err);
+    }
+  };
+
+  const handleClassroomSelect = async (classroomId) => {
+    setSelectedClassroom(classroomId);
+    try {
+      router.push(`/teacherdashboard/classroom/${classroomId}`);
+      // setStudents(res.data.students);
+    } catch (err) {
+      console.error("Error fetching students:", err);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Navbar */}
-      <nav className="w-full bg-gradient-to-r from-yellow-500 to-purple-600 text-white py-4 px-6 flex justify-between items-center fixed top-0 left-0 right-0 shadow-lg z-50">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="focus:outline-none">
-            <Menu className="w-6 h-6" />
-          </button>
-          <h1 className="text-3xl font-bold tracking-wide">
-            <a href="/" className="hover:text-purple-700 transition duration-100">SAPT</a>
-          </h1>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-white dark:bg-neutral-900 text-black dark:text-white">
+      <TeacherNavbar />
 
-      {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-opacity-20 backdrop-blur-sm z-40" onClick={() => setSidebarOpen(false)}>
-          <aside className="fixed top-16 left-0 w-64 bg-white p-6 shadow-xl h-full z-50 transition-transform">
-            <nav className="space-y-4 text-gray-700 font-medium">
-              <a href="#" className="block py-3 px-5 rounded-lg hover:bg-gradient-to-br hover:from-yellow-500 hover:to-purple-600 hover:text-white transition duration-300 cursor-pointer">Profile</a>
-              <a href="#" className="block py-3 px-5 rounded-lg hover:bg-gradient-to-br hover:from-yellow-500 hover:to-purple-600 hover:text-white transition duration-300 cursor-pointer">My Classes</a>
-              <a href="#" className="block py-3 px-5 rounded-lg hover:bg-gradient-to-br hover:from-yellow-500 hover:to-purple-600 hover:text-white transition duration-300 cursor-pointer">Settings</a>
-              <a href="#" className="block py-3 px-5 rounded-lg hover:bg-gradient-to-br hover:from-yellow-500 hover:to-purple-600 hover:text-white transition duration-300 cursor-pointer">Logout</a>
-            </nav>
-          </aside>
-        </div>
-      )}
+      <div className="pt-20 px-6 pb-10">
+        <h1 className="text-2xl font-bold mb-6 text-center">Your Classrooms</h1>
 
-      {/* Main Content */}
-      <div className="mt-20 p-6 flex flex-col items-center">
-        <h1 className="text-3xl font-bold mb-6">Your Classrooms</h1>
-        <button className="mb-6 bg-white text-purple-600 font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-200 transition">
-          + Create Classroom
-        </button>
-        <div className="w-full max-w-4xl space-y-6">
-          {classrooms.length > 0 ? (
-            classrooms.map((classroom) => (
-              <div
-                key={classroom.id}
-                className="bg-opacity-90 bg-white text-black p-6 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-transform w-full"
-                onClick={() => handleClassroomClick(classroom.id)}
+        {/* Classroom List */}
+        <div className="flex flex-wrap gap-4 justify-center mb-8">
+          {classrooms.map((cls) => (
+            <button
+              key={cls._id}
+              onClick={() => handleClassroomSelect(cls._id)}
+              className={`px-4 py-2 min-w-2xl min-h-20 rounded-md font-semibold border transition ${
+                selectedClassroom === cls._id
+                  ? "bg-purple-700 text-white"
+                  : "bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700"
+              }`}
+            >
+              {cls.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Content */}
+        {selectedClassroom && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Options */}
+            <div className="col-span-1 space-y-4">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/teacherdashboard/${selectedClassroom}/createtest`
+                  )
+                }
+                className="w-full px-4 py-3 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
               >
-                <h2 className="text-xl font-semibold mb-2">{classroom.title}</h2>
-                <p className="text-gray-800">Students: {classroom.students}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-lg">No classrooms available. Create one!</p>
-          )}
-        </div>
+                Create Test
+              </button>
+              <button
+                onClick={() =>
+                  router.push(
+                    `/teacherdashboard/${selectedClassroom}/assignedtests`
+                  )
+                }
+                className="w-full px-4 py-3 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+              >
+                View Assigned Tests
+              </button>
+              <button
+                onClick={() =>
+                  router.push(
+                    `/teacherdashboard/${selectedClassroom}/materials`
+                  )
+                }
+                className="w-full px-4 py-3 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition"
+              >
+                Provide Study Materials
+              </button>
+            </div>
+
+            {/* Right: Student List */}
+            <div className="col-span-1 lg:col-span-3">
+              <h2 className="text-xl font-semibold mb-4">
+                Students in {selectedClassroom}
+              </h2>
+              {students.length === 0 ? (
+                <p className="text-gray-500">
+                  No students in this classroom yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {students.map((student) => (
+                    <div
+                      key={student._id}
+                      className="p-4 bg-gray-100 dark:bg-neutral-800 rounded-md border dark:border-neutral-700"
+                    >
+                      <p className="font-medium">{student.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {student.email}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default TeacherDashboard;

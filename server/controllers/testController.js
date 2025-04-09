@@ -11,7 +11,7 @@ import TestSubmission from "../models/testsubmission.js";
 
 export const createTest = async (req, res) => {
   try {
-    const { title, duration, classroom, questions } = req.body;
+    const { title, duration, classroom, questions ,startTime,endTime} = req.body;
     // const teacher = await Teacher.findOne(req.teacher.id);
 
     // Validate classroom ID
@@ -49,6 +49,8 @@ export const createTest = async (req, res) => {
         marks,
         negativeMarks: negativeMarks || 0,
         customTimeLimit,
+        startTime:new Date(startTime).toDateString||0,
+        endTime:new Date(endTime).toDateString()||0
       });
     }
 
@@ -93,7 +95,10 @@ export const submitTest = async (req, res) => {
   try {
     const studentId = req.user.id;
     const { testId, answers, timeTaken } = req.body;
-
+    if (!Array.isArray(answers)) {
+      return res.status(400).json({ message: "Invalid answers format." });
+    }
+    
     const test = await Test.findById(testId);
     if (!test) return res.status(404).json({ message: "Test not found." });
 
@@ -201,19 +206,19 @@ export const getStudentSubmission = async (req, res) => {
       student: studentId,
       test: testId,
     }).populate("answers.codingSubmission");
+    
     if (!submission) {
       return res.status(404).json({ message: "Submission not found." });
     }
 
     const test = await Test.findById(testId);
-
     const formattedAnswers = await Promise.all(
       submission.answers.map(async (ans) => {
         if (ans.type === "MCQ" || ans.type === "MSQ") {
           const question = await MCQ.findById(ans.question);
           return {
             type: ans.type,
-            questionText: question.question,
+            questionText: question || "question",
             selectedOptions: ans.selectedOptions,
             isCorrect: ans.marksObtained > 0,
             marksObtained: ans.marksObtained,
@@ -234,7 +239,7 @@ export const getStudentSubmission = async (req, res) => {
         }
       })
     );
-
+    
     res.json({
       testTitle: test.title,
       submittedAt: submission.submittedAt,

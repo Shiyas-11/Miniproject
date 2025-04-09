@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 export default function LandingPage() {
   const router = useRouter();
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-orange-200  to-yellow-400 text-black dark:from-blue-950 dark:via-indigo-950 dark:to-black dark:text-white ">
+    <div
+      className="min-h-screen flex flex-col bg-gradient-to-br from-white via-orange-200  to-yellow-400 text-black
+    dark:from-blue-950 dark:via-indigo-950 dark:to-black dark:text-white "
+    >
       <LandingNavbar />
 
       {/* Hero Section */}

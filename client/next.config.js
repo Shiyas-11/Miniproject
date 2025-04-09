@@ -7,7 +7,11 @@ const nextConfig = {
   images: {
     domains: ["example.com", "images.unsplash.com"],
   },
-
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
   // Add redirects
   async redirects() {
     return [

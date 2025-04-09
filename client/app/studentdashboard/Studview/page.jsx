@@ -1,61 +1,137 @@
 "use client";
-import { useRouter } from "next/navigation";
 
-export default function StudentDashboard() {
-    const router = useRouter();
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import StudentNavbar from "@/components/nav/StudentNavbar";
+
+const Studview = () => {
+  const router = useRouter();
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const fetchTests = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/student/classroom/tests",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.data && Array.isArray(res.data.data)) {
+          setTasks(res.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching tests:", err);
+        if (err.response?.status === 401) {
+          localStorage.clear();
+          router.push("/login");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTests();
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white p-10">
+    <div className="min-h-screen bg-white dark:bg-neutral-900 text-black dark:text-white">
       {/* Navbar */}
-      <nav className="w-full bg-gradient-to-r from-yellow-500 to-purple-600 text-white py-4 px-6 flex justify-between items-center fixed top-0 left-0 right-0 shadow-lg z-50">
-    <div className="flex items-center gap-4">
-      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="focus:outline-none">
-        <link className="w-6 h-6" />
-      </button>
-      <h1 className="text-3xl font-bold tracking-wide"><a href="/" className="hover:text-purple-700 transition duration-100">SAPT</a></h1>
-    </div>
-  </nav>
-      
-      <div className="mt-20 text-center">
-        <h1 className="text-4xl font-bold text-purple-600 mb-10 drop-shadow-lg tracking-wide">
-          Try these tests....
-        </h1>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-6xl mt-10">
-        {/* Soft Skills Test Card */}
-        <div className="bg-white p-10 rounded-3xl shadow-lg text-center transform transition duration-500 hover:scale-105 hover:shadow-2xl border border-purple-300">
-          <h2 className="text-3xl font-semibold mb-6 text-purple-700">Viva</h2>
-          <button
-            onClick={() => router.push("/soft-skills-test")}
-            className="bg-purple-600 text-white px-10 py-3 rounded-full shadow-md hover:bg-purple-800 transition-all font-medium"
-          >
-            Attempt Test
-          </button>
-        </div>
+      <StudentNavbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        {/* Coding Test Card */}
-        <div className="bg-white p-10 rounded-3xl shadow-lg text-center transform transition duration-500 hover:scale-105 hover:shadow-2xl border border-blue-300">
-          <h2 className="text-3xl font-semibold mb-6 text-blue-700">Coding </h2>
-          <button
-            onClick={() => router.push("/studentdashboard/Studview/codingtest")}
-            className="bg-blue-600 text-white px-10 py-3 rounded-full shadow-md hover:bg-blue-800 transition-all font-medium"
-          >
-            Attempt Test
-          </button>
-        </div>
+      {/* Sidebar backdrop (future ready) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-opacity-30 backdrop-blur-sm z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        {/* Aptitude Test Card */}
-        <div className="bg-white p-10 rounded-3xl shadow-lg text-center transform transition duration-500 hover:scale-105 hover:shadow-2xl border border-green-300">
-          <h2 className="text-3xl font-semibold mb-6 text-green-700">Aptitude </h2>
-          <button
-            onClick={() => router.push("/studentdashboard/Studview/aptitudetest")}
-            className="bg-green-600 text-white px-10 py-3 rounded-full shadow-md hover:bg-green-800 transition-all font-medium"
-          >
-            Attempt Test
-          </button>
-        </div>
+      {/* Main Content */}
+      <div className="pt-20 px-6 pb-10">
+        <h1 className="text-2xl font-bold mb-6 text-center">Assigned Tests</h1>
+        {loading ? (
+          <p className="text-center">Loading tests...</p>
+        ) : tasks.length === 0 ? (
+          <p className="text-center text-gray-500">No tests assigned yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tasks.map((t) => (
+              <div
+                key={t._id}
+                className="p-5 rounded-lg shadow-md bg-gray-100 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700"
+              >
+                <h2 className="text-xl font-semibold mb-1">{t.title}</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Deadline:{" "}
+                  {new Date(t.test.endTime).toLocaleString("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+                <p
+                  className={`mt-2 text-sm font-medium ${
+                    t.submitted
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {t.submitted ? "Submitted" : "Pending"}
+                </p>
+                {/* Optional action */}
+                <button
+                  onClick={() => {
+                    if (!t.submitted) {
+                      router.push(`/studentdashboard/starttest/${t.test._id}`);
+                    }
+                  }}
+                  className={`mt-4 px-4 py-2 rounded-md text-sm font-semibold ${
+                    t.submitted
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
+                  } text-white transition`}
+                  disabled={t.submitted}
+                >
+                  {t.submitted ? "Already Submitted" : "Start Test"}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (t.submitted) {
+                      router.push(
+                        `/studentdashboard/Studview/viewsubmission/${t.test._id}`
+                        // console.log(t.test._id)
+                      );
+                    }
+                  }}
+                  className={`mt-4 ml-2 px-4 py-2 rounded-md text-sm font-semibold ${
+                    !t.submitted
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
+                  } text-white transition`}
+                  disabled={!t.submitted}
+                >
+                  {t.submitted ? "View Result" : "Result not available"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default Studview;

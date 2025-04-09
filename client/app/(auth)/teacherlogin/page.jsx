@@ -1,26 +1,55 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
+import axios from "axios"; // Import useRouter
 
 export default function TeacherSignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter(); // Initialize useRouter
-
-  const handleSubmit = (e) => {
+  const [error, setError] = useState(null);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Teacher Sign In", { email, password });
+    localStorage.clear();
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/teacher/login",
+        { email, password },
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 5000,
+        }
+      );
 
-    // TODO: Add authentication logic here
+      const token = response.data.token;
+      console.log(token);
+      localStorage.setItem("name", response.data.name);
+      localStorage.setItem("email", response.data.email);
+      localStorage.setItem("token", token); // Save JWT token in local storage
 
-    // Redirect to Teacher Dashboard after successful sign-in
-    router.push("/teacherdashboard");
+      if (response.data.firstLogin)
+        router.push("/newpass"); //for first time login
+      else router.push("/teacherdashboard"); // Redirect after login
+    } catch (error) {
+      if (error.response) {
+        setError(
+          `Login failed: ${
+            error.response.data.message || "Invalid credentials"
+          }`
+        );
+      } else {
+        setError("Network error. Please try again");
+      }
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold text-center mb-6"> Teacher Sign In</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">
+          {" "}
+          Teacher Sign In
+        </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700">Email</label>

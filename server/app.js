@@ -23,7 +23,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/teacher", teacherAuthRoutes);
-app.use("/api/student", studentAuthRoutes);
+app.use("/api/studentAuth", studentAuthRoutes);
 app.use("/api/classroom", classroomRoutes);
 app.use("/api/livequiz", liveQuizRoutes);
 app.use("/api/questions", questionUploadRoutes);

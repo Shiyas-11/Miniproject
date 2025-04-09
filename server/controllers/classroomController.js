@@ -41,6 +41,7 @@ export const createClassroom = async (req, res) => {
 export const getClassroomDetails = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("details")
 
     const classroom = await Classroom.findById(id)
       .populate("createdBy", "name email")
@@ -75,12 +76,14 @@ export const getClassroomDetails = async (req, res) => {
 // Get announcements + 3 most recent assigned tests (for dashboard)
 export const getClassroomOverview = async (req, res) => {
   try {
+    console.log("overview")
+
     const { id } = req.params;
 
     const classroom = await Classroom.findById(id)
       .populate("announcements.postedBy", "name")
       .populate("assignedTests.test", "title type");
-
+    // console.log(classroom)
     if (!classroom)
       return res.status(404).json({ error: "Classroom not found" });
 
@@ -119,6 +122,7 @@ export const getClassroomOverview = async (req, res) => {
 // Get paginated student list (for right panel)
 export const getClassroomStudents = async (req, res) => {
   try {
+    console.log("studentsapi")
     const { id } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 15;
@@ -224,3 +228,4 @@ export const getClassroomMaterials = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
